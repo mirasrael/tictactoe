@@ -8,8 +8,9 @@ class Game(val colCount: Int = 4, val rowCount: Int = 4, val winningCount: Int =
     private val field: Array<Sign?> = arrayOfNulls(colCount * rowCount)
     private val player1: Player = Player(TIC, "Player 1")
     private val player2: Player = Player(TAC, "Player 2")
-    private var winner: Player? = null
     private var turn: Turn
+
+    var winner: Player? = null
 
     init {
         turn = Turn(player1, 1)
@@ -42,35 +43,31 @@ class Game(val colCount: Int = 4, val rowCount: Int = 4, val winningCount: Int =
         }
     }
 
-    /*
-    0 [?, ?, ?, ?]
-    1 [?, ?, ?, ?]
-    2 [?, ?, ?, ?]
-    3 [?, ?, ?, ?]
-     */
     private fun checkWinCondition(position: Position): Boolean {
         val sign = turn.player.sign
-        // check column
-        for (start in (Math.max(0, position.row - (winningCount - 1))..position.row)) {
-            if (start + winningCount > rowCount) {
-                continue
+        val maxOffset = winningCount - 1
+
+        fun checkRange(deltaRow: Int, deltaCol: Int): Boolean {
+            for (offset in 0..maxOffset) {
+                val row = position.row - offset * deltaRow
+                val col = position.col - offset * deltaCol
+                val minRow = row + (if (deltaRow < 0) deltaRow * maxOffset else 0)
+                val maxRow = row + (if (deltaRow > 0) deltaRow * maxOffset else 0)
+                val minCol = col + (if (deltaCol < 0) deltaCol * maxOffset else 0)
+                val maxCol = col + (if (deltaCol > 0) deltaCol * maxOffset else 0)
+                if (minRow < 0 || minCol < 0 || maxRow >= rowCount || maxCol >= colCount)
+                {
+                    continue
+                }
+                if ((0..maxOffset).all { field[toIndex(row + deltaRow * it, col + deltaCol * it)] == sign })
+                {
+                    return true
+                }
             }
-            if ((start until start + winningCount).all { field[toIndex(it, position.col)] == sign })
-            {
-                return true
-            }
+            return false
         }
-        // check row
-        for (start in (Math.max(0, position.col - (winningCount - 1))..position.col)) {
-            if (start + winningCount - 1 > colCount) {
-                continue
-            }
-            if ((start until start + winningCount).all { field[toIndex(position.row, it)] == sign })
-            {
-                return true
-            }
-        }
-        return false
+
+        return checkRange(0, 1) || checkRange(1, 0) || checkRange(1, 1) || checkRange(1, -1)
     }
 
     private fun toIndex(row: Int, col: Int): Int = row * colCount + col

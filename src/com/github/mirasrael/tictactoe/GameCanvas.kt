@@ -1,5 +1,7 @@
 package com.github.mirasrael.tictactoe
 
+import java.awt.Color
+import java.awt.Font
 import java.awt.Graphics
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -22,6 +24,28 @@ class GameCanvas(val game: Game) : JPanel() {
     private val rowHeight get() = this.height / game.rowCount
 
     override fun paintComponent(g: Graphics) {
+        drawField(g)
+        if (game.winner != null) {
+            showWinner(g)
+        }
+    }
+
+    private fun showWinner(g: Graphics) {
+        g.font = Font("Arial", Font.BOLD, 32)
+        val winner = game.winner ?: throw NullPointerException()
+        val displayText = "${winner.name} [${winner.sign.symbol}] win!!!"
+        val fontMetrics = g.fontMetrics
+        val textWidth = fontMetrics.stringWidth(displayText)
+        val textHeight = fontMetrics.height
+        val x = (this.width - textWidth) / 2
+        val y = (this.height - textHeight) / 2 - textHeight
+        g.color = Color.WHITE
+        g.fillRect(x, y, textWidth, textHeight)
+        g.color = Color.BLACK
+        g.drawString(displayText, x, y + textHeight)
+    }
+
+    private fun drawField(g: Graphics) {
         val rowHeight = this.rowHeight
         val colWidth = this.colWidth
 
@@ -34,7 +58,7 @@ class GameCanvas(val game: Game) : JPanel() {
             val x = col * colWidth
             g.drawLine(x, 0, x, this.height)
         }
-        
+
         game.forEachSign { sign, position -> drawSign(g, sign, position) }
     }
 
